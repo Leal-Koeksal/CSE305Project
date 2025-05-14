@@ -1,6 +1,7 @@
 #include "Tree.h"
 #include <limits>
 #include <cstdlib>
+#include <iostream>
 
 Tree::Tree(Node* root) : root(root) {}
 
@@ -17,6 +18,11 @@ void Tree::delete_subtree(Node* node) {
 
 double Tree::evaluate(Node* node) const {
     if (!node) node = root;
+
+    if (node->is_leaf() && node->is_op()) {
+        throw std::runtime_error("Invalid tree: a leaf node cannot be an operator.");
+    }
+
     if (node->is_leaf()) return std::stod(node->getString());
 
     double left = evaluate(node->getLeftChild());
