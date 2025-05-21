@@ -16,7 +16,7 @@ int main() {
         Tree tree(root);
         */
 
-        Tree tree = tree_constructor(10000);
+        Tree tree = tree_constructor(100000);
 
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
@@ -37,8 +37,17 @@ int main() {
         std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
 
     } catch (const std::exception& ex) {
+        std::cerr << "Unhandled exception: " << ex.what() << std::endl;
+        return 1;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred!" << std::endl;
+        return 1;
+    } 
+    /*
+    catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
+    */
 
     return 0;
 }

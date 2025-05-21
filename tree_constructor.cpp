@@ -16,7 +16,7 @@ std::string get_random_operator() {
 
 std::string get_random_number() {
     static std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<> dist(1, 100); // Avoid zero for division (easier)
+    std::uniform_real_distribution<> dist(0.1, 1); // Avoid zero for division (easier)
     return std::to_string(dist(rng));
 }
 
@@ -26,16 +26,13 @@ Tree tree_constructor(int n) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    // Step 1: Create n+1 leaf nodes (operands)
     std::vector<Node*> nodes;
     for (int i = 0; i < n + 1; ++i) {
         std::string value = get_random_number();
         nodes.push_back(new Node(value));
     }
 
-    // Step 2: Randomly combine nodes into binary operator nodes
     while (nodes.size() > 1) {
-        // Pick two random nodes to combine
         int i = std::uniform_int_distribution<>(0, nodes.size() - 1)(gen);
         Node* left = nodes[i];
         nodes.erase(nodes.begin() + i);
@@ -50,7 +47,6 @@ Tree tree_constructor(int n) {
         nodes.push_back(parent);
     }
 
-    // Final node is the root
     Node* root = nodes.front();
     return Tree(root);
 }
