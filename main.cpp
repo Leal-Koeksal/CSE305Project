@@ -3,15 +3,20 @@
 #include "Tree.h"
 
 double evaluate_parallel(Node* node);
+Tree tree_constructor(int n);
 
 int main() {
     try {
+        /*
         Node* leftleft = new Node("10");
         Node* leftright = new Node("8");
         Node* left = new Node("*", leftleft, leftright);
         Node* right = new Node("3");
         Node* root = new Node("+", left, right);
         Tree tree(root);
+        */
+
+        Tree tree = tree_constructor(10000);
 
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
