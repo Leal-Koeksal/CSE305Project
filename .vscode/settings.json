@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "future": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "ios": "cpp"
     }
 }
