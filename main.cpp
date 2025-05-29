@@ -3,6 +3,7 @@
 #include "Tree.h"
 
 double evaluate_parallel(Node* node);
+double randomised_evaluate_parallel(Node* root);
 Tree tree_constructor(int n);
 
 int main() {
@@ -35,6 +36,15 @@ int main() {
 
         std::cout << "Parallel Result: " << result_parallel << "\n";
         std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
+
+        // --- Randomised Parallel Evaluation Timer ---
+        auto start_randomised_parallel = std::chrono::high_resolution_clock::now();
+        double result_randomised_parallel = randomised_evaluate_parallel(tree.root);
+        auto end_randomised_parallel = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed_randomised_parallel = end_randomised_parallel - start_randomised_parallel;
+
+        std::cout << "Randomised Parallel Result: " << result_randomised_parallel << "\n";
+        std::cout << "Randomised Parallel Time: " << elapsed_randomised_parallel.count() << " seconds\n";
 
     } catch (const std::exception& ex) {
         std::cerr << "Unhandled exception: " << ex.what() << std::endl;
