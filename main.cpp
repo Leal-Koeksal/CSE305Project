@@ -16,7 +16,7 @@ int main() {
         Tree tree(root);
         */
 
-        Tree tree = tree_constructor(100000);
+        Tree tree = tree_constructor(10000);
 
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
@@ -51,3 +51,6 @@ int main() {
 
     return 0;
 }
+
+// g++ main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp -std=c++17 -pthread -o main
+// ./main
