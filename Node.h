@@ -2,9 +2,11 @@
 #define NODE_H
 
 #include <string>
+#include <vector>
 
 class Node {
     std::string x;
+    // std::vector<Node*> children = std::vector<Node*>();;
     Node* left = nullptr;
     Node* right = nullptr;
     Node* parent = nullptr;
@@ -21,7 +23,11 @@ public:
     std::string getString();
     Node* getLeftChild();
     Node* getRightChild();
+    // std::vector<Node*> getChildren();
+    // void addChild(Node* child);
+    // Node* removeChild(Node* child);
     Node* getParent();
+    void setParent(Node* parent);
 
     bool isDeleted() const;
     void markDeleted();
