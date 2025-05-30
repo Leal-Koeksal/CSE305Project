@@ -9,7 +9,7 @@ std::vector<Node*> list_nodes(const Tree& tree);
 
 int main() {
     try {
-        Tree tree = tree_constructor(1000);
+        Tree tree = tree_constructor(1000000);
         std::vector<Node*> nodes = list_nodes(tree);
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+enum class Sex { UNASSIGNED, M, F };
+
 class Node {
     std::string x;
     // std::vector<Node*> children = std::vector<Node*>();;
@@ -17,6 +19,7 @@ class Node {
     bool marked = false;
     double eval = 0.0;
     bool is_value_set = false;
+    Sex sex = Sex::UNASSIGNED;
 public:
     Node(const std::string& x);
     Node(const std::string& x, Node* left, Node* right);
@@ -25,11 +28,14 @@ public:
     std::string getString();
     Node* getLeftChild();
     Node* getRightChild();
-    // std::vector<Node*> getChildren();
-    // void addChild(Node* child);
-    // Node* removeChild(Node* child);
     Node* getParent();
     void setParent(Node* parent);
+    Sex getSex() const { return sex; }
+    void setSex(Sex s) { sex = s; }
+
+    bool isMarked() const { return marked; }
+    void mark() { marked = true; }
+    void unmark() { marked = false; }
 
     bool isDeleted() const;
     void markDeleted();
