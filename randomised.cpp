@@ -86,7 +86,7 @@ int Arg(Node* v) {
     return arg;
 }
 
-
+/*
 void randomized_contract(std::vector<Node*>& nodes, Node* root) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -142,7 +142,95 @@ void randomized_contract(std::vector<Node*>& nodes, Node* root) {
             }
         }
     }
+*/
+
+/*
+void randomized_contract(std::vector<Node*>& nodes, Node* root) {
+    bool progress = true;
+
+    while (progress) {
+        progress = false;
+
+        #pragma omp parallel for
+        for (int i = 0; i < nodes.size(); ++i) {
+            Node* v = nodes[i];
+            if (v->isDeleted()) continue;  // ← removed check for (v == root)
+
+            Node* left = v->getLeftChild();
+            Node* right = v->getRightChild();
+
+            // Leaf node with no operator
+            if (v->is_leaf() && !v->is_op()) {
+                v->setEval(std::stod(v->getString()));
+                v->markDeleted();
+                continue;
+            }
+
+            // Evaluate operator node if both children have values
+            if (left && right && left->hasValue() && right->hasValue()) {
+                double result = 0;
+                std::string op = v->getString();
+
+                if (op == "+") result = left->getEval() + right->getEval();
+                else if (op == "-") result = left->getEval() - right->getEval();
+                else if (op == "*") result = left->getEval() * right->getEval();
+                else if (op == "/") result = right->getEval() != 0
+                    ? left->getEval() / right->getEval()
+                    : std::numeric_limits<double>::infinity();
+
+                v->setEval(result);
+                v->markDeleted();
+                progress = true;
+            }
+        }
+    }
 }
+*/
+
+#include <atomic>
+
+void randomized_contract(std::vector<Node*>& nodes, Node* root) {
+    std::atomic<bool> progress(true);
+
+    while (progress.load()) {
+        progress = false;
+
+        #pragma omp parallel for
+        for (int i = 0; i < (int)nodes.size(); ++i) {
+            Node* v = nodes[i];
+            if (!v || v->isDeleted()) continue;
+
+            Node* left = v->getLeftChild();
+            Node* right = v->getRightChild();
+
+            if (v->is_leaf() && !v->is_op()) {
+                v->setEval(std::stod(v->getString()));
+                v->markDeleted();
+                progress.store(true);
+                continue;
+            }
+
+            if (left && right && left->hasValue() && right->hasValue()) {
+                double result = 0;
+                std::string op = v->getString();
+
+                if (op == "+") result = left->getEval() + right->getEval();
+                else if (op == "-") result = left->getEval() - right->getEval();
+                else if (op == "*") result = left->getEval() * right->getEval();
+                else if (op == "/") result = right->getEval() != 0
+                    ? left->getEval() / right->getEval()
+                    : std::numeric_limits<double>::infinity();
+
+                v->setEval(result);
+                v->markDeleted();
+                progress.store(true);
+            }
+        }
+        #pragma omp barrier
+    }
+}
+
+
 
 
 // clang++ -std=c++17 -Xpreprocessor -fopenmp -I/opt/homebrew/include -L/opt/homebrew/lib -lomp main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp randomised.cpp -std=c++17 -pthread -o main

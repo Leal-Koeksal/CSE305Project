@@ -3,6 +3,7 @@
 #include <string>
 #include <ctime>
 #include <algorithm>
+#include <stack>
 #include "Tree.h"
 
 // This code was inspired from stack overflow:
@@ -49,4 +50,33 @@ Tree tree_constructor(int n) {
 
     Node* root = nodes.front();
     return Tree(root);
+}
+
+std::vector<Node*> list_nodes(const Tree& tree) {
+    Node* root = tree.getRoot();
+    std::vector<Node*> result;
+
+    if (!root) return result;
+
+    // Use a stack for iterative traversal (or you could use recursion)
+    std::stack<Node*> stack;
+    stack.push(root);
+
+    while (!stack.empty()) {
+        Node* current = stack.top();
+        stack.pop();
+
+        result.push_back(current);
+
+        // Push right first so left is processed first
+        if (current->getRightChild()) {
+            stack.push(current->getRightChild());
+        }
+
+        if (current->getLeftChild()) {
+            stack.push(current->getLeftChild());
+        }
+    }
+
+    return result;
 }

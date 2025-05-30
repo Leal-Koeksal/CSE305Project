@@ -7,19 +7,6 @@ Node::Node(const std::string& x, Node* left, Node* right) : x(x), left(left), ri
 std::string Node::getString() { return x; }
 Node* Node::getLeftChild() { return left; }
 Node* Node::getRightChild() { return right; }
-/*
-std::vector<Node*> Node::getChildren() { return children; }
-void Node::addChild(Node* child) {
-    children.push_back(child);
-}
-Node* Node::removeChild(Node* child) {
-    children.erase(
-        std::remove(children.begin(), children.end(), child),
-        children.end()
-    );
-    return child;
-}
-*/
 Node* Node::getParent() { return parent; }
 void Node::setParent(Node* prt) {
     parent = prt;

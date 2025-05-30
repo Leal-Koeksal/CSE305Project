@@ -1,3 +1,4 @@
+
 #ifndef NODE_H
 #define NODE_H
 
@@ -19,6 +20,7 @@ class Node {
 public:
     Node(const std::string& x);
     Node(const std::string& x, Node* left, Node* right);
+    ~Node() = default;
 
     std::string getString();
     Node* getLeftChild();

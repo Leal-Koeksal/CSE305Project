@@ -10,6 +10,7 @@ public:
     Tree(Node* root = nullptr);
     ~Tree();
 
+    Node* getRoot() const;
     void delete_subtree(Node* node);
     double evaluate(Node* node = nullptr) const;
 };
