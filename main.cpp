@@ -2,10 +2,11 @@
 #include <chrono>
 #include "Tree.h"
 
+Tree tree_constructor(int n);
+std::vector<Node*> list_nodes(Tree& tree);
 double evaluate_parallel(Node* node);
 void randomized_contract(std::vector<Node*>& nodes, Node* root); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
-Tree tree_constructor(int n);
-std::vector<Node*> list_nodes(const Tree& tree);
+void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree);
 
 double evaluate_serial(Node* node) {
     if (!node) return 0;
@@ -35,6 +36,7 @@ int main() {
     try {
         Tree tree = tree_constructor(100000);
         std::vector<Node*> nodes = list_nodes(tree);
+
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
         double result_serial = tree.evaluate();
@@ -71,16 +73,25 @@ int main() {
         std::chrono::duration<double> time_taken = end - start;
         std::cout << "Randomised Parallel Time: " << time_taken.count() << " seconds\n";
 
-        /*
-        auto start_randomised_parallel = std::chrono::high_resolution_clock::now();
-        randomized_tree_evaluation(nodes, tree.root);
-        double result_randomised_parallel = tree.root->getEval();
-        auto end_randomised_parallel = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed_randomised_parallel = end_randomised_parallel - start_randomised_parallel;
+        // --- Optimal Randomised Tree Evaluation Timer ---
+        auto start_optimal = std::chrono::high_resolution_clock::now();
+        // Make a fresh copy of the nodes vector (since nodes may be modified in-place)
+        std::vector<Node*> nodes_opt = list_nodes(tree);  // or however you get the full node list
+        // Call the optimal randomized tree evaluation algorithm
+        optimal_randomised_tree_evaluation_algorithm(nodes_opt, &tree);
+        // Find and evaluate the final surviving node
+        for (Node* node : nodes_opt) {
+            if (node && !node->isDeleted()) {
+                evaluate_serial(node);
+                std::cout << "Optimal Randomised Result: " << node->getEval() << std::endl;
+                break;
+            }
+        }
+        auto end_optimal = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_optimal = end_optimal - start_optimal;
+        std::cout << "Optimal Randomised Time: " << time_optimal.count() << " seconds\n";
 
-        std::cout << "Randomised Parallel Result: " << result_randomised_parallel << "\n";
-        std::cout << "Randomised Parallel Time: " << elapsed_randomised_parallel.count() << " seconds\n";
-        */
+
     } catch (const std::exception& ex) {
         std::cerr << "Unhandled exception: " << ex.what() << std::endl;
         return 1;

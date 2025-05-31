@@ -52,7 +52,7 @@ Tree tree_constructor(int n) {
     return Tree(root);
 }
 
-std::vector<Node*> list_nodes(const Tree& tree) {
+std::vector<Node*> list_nodes(Tree& tree) {
     Node* root = tree.getRoot();
     std::vector<Node*> result;
 

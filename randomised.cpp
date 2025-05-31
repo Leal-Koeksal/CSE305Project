@@ -6,6 +6,9 @@
 #include <stack>
 #include "Tree.h"
 
+
+std::vector<Node*> list_nodes(Tree& tree);
+
 int Arg(Node* v) {
     int arg = 0;
     if (v->getLeftChild() && !v->getLeftChild()->hasValue()) ++arg;
@@ -131,13 +134,106 @@ void randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root) {
     }
 }
 
+std::vector<int> generate_random_permutation(int n) {
+    std::vector<int> perm(n);
+    std::iota(perm.begin(), perm.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(perm.begin(), perm.end(), g);
+    return perm;
+}
+
+void discard_zeros(std::vector<Node*>& pointers, int x_max) {
+    std::vector<Node*> filtered;
+    for (Node* ptr : pointers) {
+        if (ptr != nullptr) {
+            filtered.push_back(ptr);
+            if (filtered.size() == x_max) break;
+        }
+    }
+    pointers = filtered;
+}
+
+void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree) {
+    std::vector<int> x;
+    x.push_back(nodes.size());
+
+    double alpha = 31.0 / 32.0;
+    int k = 0, i = 0;
+    std::vector<Tree*> T;
+    T.push_back(tree);
+
+    // Step (a)
+    while (x[i] >= nodes.size() / log(nodes.size())) {
+        x.push_back(ceil(alpha * x[i]));
+        i++;
+    }
+
+    // Step (b): Generate permutations π₁, ..., πᵢ
+    std::vector<std::vector<int>> permutations(i);
+    #pragma omp parallel for
+    for (int j = 0; j < i; ++j) {
+        permutations[j] = generate_random_permutation(x[j]);
+    }
+
+    // Step (c)
+    while (k < i) {
+        std::vector<Node*> nodesT_k = list_nodes(*T[k]);
+        randomized_contract(nodesT_k, T[k]->root);
+    
+        std::vector<Node*> permuted;
+        for (int idx : permutations[k]) {
+            if (idx < nodesT_k.size()) {
+                permuted.push_back(nodesT_k[idx]);
+            }
+        }
+    
+        discard_zeros(permuted, x[k + 1]);
+        nodes = permuted;
+    
+        Tree* new_tree = new Tree{T[k]->root};  // or updated root
+        T.push_back(new_tree);
+    
+        k++;
+    }
+
+    // Step (d): Final contraction until |T| == 1
+    while (count_active_nodes(nodes) > 1) {
+        dynamic_tree_contraction(nodes, tree->root);
+    }
+
+    for (size_t j = 1; j < T.size(); ++j) {
+        T[j]->root = nullptr;  // prevent destructor from double-freeing
+        delete T[j];
+    }
+}
+
 /*
-void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Node* root) {
-    int x_1 = nodes.size();
+void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree) {
+    std::vector<int> x = std::vector<int>();
+    x.push_back(nodes.size());
     double alpha = 31/32;
-    int k = 1;
-    int i = 1;
-    int 
+    int k = 0;
+    int i = 0;
+    std::vector<Tree*> T = std::vector<Tree*>();
+    T.push_back(tree);
+    while (x[i] >= nodes.size() / (log(nodes.size()))) {
+        x.push_back(ceil(alpha*x[i]));
+        i ++;
+    }
+    #pragma omp parallel for
+    for (int j = 0; j < i; ++j) {
+        // generate permutations pi_1, ..., pi_i of sizes x[0], ..., x[i] respectively
+    }
+    while (k < i) {
+        T.push_back(randomized_contract(T[k])); // using p processors
+        // permute the pointers of T[k+1] using pi_{k+1}
+        // apply the discard zeros to the list of pointers T[k+1] returning at most x[k+1]
+        k++;
+    }
+    while (count_active_nodes(nodes) > 1) {
+        dynamic_tree_contraction(nodes, tree->root); // using a distinct processor at each vertex
+    }
 }
 */
 
