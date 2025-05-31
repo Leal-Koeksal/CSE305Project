@@ -27,7 +27,9 @@ public:
 
     std::string getString();
     Node* getLeftChild();
+    void setLeftChild(Node* child) { left = child; }
     Node* getRightChild();
+    void setRightChild(Node* child) { right = child; }
     Node* getParent();
     void setParent(Node* parent);
     Sex getSex() const { return sex; }
@@ -36,6 +38,7 @@ public:
     bool isMarked() const { return marked; }
     void mark() { marked = true; }
     void unmark() { marked = false; }
+    void markParent() { parent->mark(); }
 
     bool isDeleted() const;
     void markDeleted();

@@ -3,13 +3,37 @@
 #include "Tree.h"
 
 double evaluate_parallel(Node* node);
-void randomized_contract(std::vector<Node*>& nodes, Node* root);
+void randomized_contract(std::vector<Node*>& nodes, Node* root); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
 Tree tree_constructor(int n);
 std::vector<Node*> list_nodes(const Tree& tree);
 
+double evaluate_serial(Node* node) {
+    if (!node) return 0;
+    if (node->hasValue()) return node->getEval();
+    if (node->is_leaf() && !node->is_op()) {
+        double val = std::stod(node->getString());
+        node->setEval(val);
+        return val;
+    }
+
+    double left = evaluate_serial(node->getLeftChild());
+    double right = evaluate_serial(node->getRightChild());
+    double result = 0;
+
+    std::string op = node->getString();
+    if (op == "+") result = left + right;
+    else if (op == "-") result = left - right;
+    else if (op == "*") result = left * right;
+    else if (op == "/") result = (right != 0 ? left / right : std::numeric_limits<double>::infinity());
+
+    node->setEval(result);
+    return result;
+}
+
+
 int main() {
     try {
-        Tree tree = tree_constructor(1000000);
+        Tree tree = tree_constructor(100000);
         std::vector<Node*> nodes = list_nodes(tree);
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
@@ -29,15 +53,34 @@ int main() {
         std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
 
         // --- Randomised Parallel Evaluation Timer ---
-        auto start_randomised_parallel = std::chrono::high_resolution_clock::now();
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // 1. Call randomized contraction
         randomized_contract(nodes, tree.root);
+
+        // 2. Find the final surviving node and evaluate
+        for (Node* node : nodes) {
+            if (node && !node->isDeleted()) {
+                evaluate_serial(node);  // ⬅️ This must be called here
+                std::cout << "Randomised Parallel Result: " << node->getEval() << std::endl;
+                break;
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_taken = end - start;
+        std::cout << "Randomised Parallel Time: " << time_taken.count() << " seconds\n";
+
+        /*
+        auto start_randomised_parallel = std::chrono::high_resolution_clock::now();
+        randomized_tree_evaluation(nodes, tree.root);
         double result_randomised_parallel = tree.root->getEval();
         auto end_randomised_parallel = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed_randomised_parallel = end_randomised_parallel - start_randomised_parallel;
 
         std::cout << "Randomised Parallel Result: " << result_randomised_parallel << "\n";
         std::cout << "Randomised Parallel Time: " << elapsed_randomised_parallel.count() << " seconds\n";
-
+        */
     } catch (const std::exception& ex) {
         std::cerr << "Unhandled exception: " << ex.what() << std::endl;
         return 1;
