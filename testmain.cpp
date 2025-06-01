@@ -124,7 +124,7 @@ int main() {
     Node* root = build_test_tree3();
     Tree tree(root);
 
-    print_tree(tree.get_root());
+    print_tree(tree.getRoot());
 
     std::cout << "Before contraction: " << tree.evaluate() << std::endl;
 

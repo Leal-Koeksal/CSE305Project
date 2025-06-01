@@ -13,6 +13,8 @@ public:
     Node* getRoot() const;
     void delete_subtree(Node* node);
     double evaluate(Node* node = nullptr) const;
+
+    
 };
 
 #endif // TREE_H

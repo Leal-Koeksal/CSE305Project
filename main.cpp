@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <atomic>
 #include "Tree.h"
 
 Tree full_tree_constructor(int n);
