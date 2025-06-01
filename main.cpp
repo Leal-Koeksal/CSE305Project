@@ -37,9 +37,9 @@ double evaluate_serial(Node* node) {
 
 int main() {
     try {
-        // Tree tree = full_tree_constructor(1000000);
+        Tree tree = full_tree_constructor(100000);
         // Tree tree = most_unbalanced_tree_constructor(100);
-        Tree tree = random_tree_constructor(1000);
+        // Tree tree = random_tree_constructor(100);
         std::vector<Node*> nodes = list_nodes(tree);
         std::cout << "Tree is constructed.\n";
 

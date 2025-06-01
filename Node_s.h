@@ -1,9 +1,9 @@
+
 #ifndef NODE_H
 #define NODE_H
 
 #include <string>
 #include <vector>
-#include <regex>
 
 enum class Sex { UNASSIGNED, M, F };
 
@@ -27,11 +27,11 @@ public:
 
     std::string getString();
     Node* getLeftChild();
-    //void setLeftChild(Node* child);
+    void setLeftChild(Node* child);
     Node* getRightChild();
-    //void setRightChild(Node* child);
+    void setRightChild(Node* child);
     Node* getParent();
-    //void setParent(Node* parent);
+    void setParent(Node* parent);
     Sex getSex() const;
     void setSex(Sex s);
 
@@ -49,20 +49,6 @@ public:
 
     bool is_leaf() const;
     bool is_op() const;
-
-    // helper functions for tree contraction
-    bool is_function();
-    // bool is_unary_chain_node() const; // true is node has exactly one child
-    
-    // for example tree I am making
-    void setLeftChild(Node*);
-    void setRightChild(Node*);
-    void setParent(Node*);
-    void setString(const std::string& val);
-
-    // linear function: a*x + b -> a,b
-    bool eval_function(double); // function is the node
-
 };
 
 #endif // NODE_H
