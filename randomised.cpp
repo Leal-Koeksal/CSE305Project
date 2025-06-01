@@ -33,53 +33,6 @@ int count_active_nodes(const std::vector<Node*>& nodes) {
     return count;
 }
 
-/*
-void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
-    #pragma omp parallel for
-    for (int i = 0; i < (int)nodes.size(); ++i) {
-        Node* v = nodes[i];
-        if (!v || v->isDeleted()) continue;
-
-        int num_children = 0;
-        if (v->getLeftChild() && !v->getLeftChild()->isDeleted()) ++num_children;
-        if (v->getRightChild() && !v->getRightChild()->isDeleted()) ++num_children;
-
-        Node* parent = v->getParent();
-        if (!parent || parent->isDeleted()) continue;
-
-        int num_siblings = 0;
-        if (parent->getLeftChild() && !parent->getLeftChild()->isDeleted()) ++num_siblings;
-        if (parent->getRightChild() && !parent->getRightChild()->isDeleted()) ++num_siblings;
-
-        // Case 1: Leaf node — try to delete it
-        if (num_children == 0) {
-            if (parent) parent->mark();
-
-            if (active_node_count > 1) {
-                v->markDeleted();
-                --active_node_count;
-            }
-        }
-
-        // Case 2: Contract if node has 1 child and parent has 1 child (== this node)
-        else if (num_children == 1 && num_siblings == 1) {
-            Node* grandparent = parent->getParent();
-            if (!grandparent || grandparent->isDeleted()) continue;
-
-            if (grandparent->getLeftChild() == parent) {
-                grandparent->setLeftChild(v);
-            } else if (grandparent->getRightChild() == parent) {
-                grandparent->setRightChild(v);
-            }
-
-            v->setParent(grandparent);
-        }
-    }
-
-    #pragma omp barrier  // Optional, ensures threads finish before function exits
-}
-*/
-
 void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
     const int num_threads = std::thread::hardware_concurrency(); // Number of concurrent threads supported
     // Found at link: https://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency.html
@@ -133,67 +86,6 @@ void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root, std::atomic
 
     for (auto& thread : threads) thread.join();
 }
-
-
-/*
-void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
-    // Parallel contraction
-    #pragma omp parallel
-    {
-        // Thread-local RNG
-        std::mt19937 rng;
-        rng.seed(std::random_device{}() + omp_get_thread_num());
-
-        #pragma omp for
-        for (int i = 0; i < (int)nodes.size(); ++i) {
-            Node* v = nodes[i];
-            if (!v || v->isDeleted()) continue;
-
-            int num_children = 0;
-            Node* l = v->getLeftChild();
-            if (l && !l->isDeleted()) ++num_children;
-            Node* r = v->getRightChild();
-            if (r && !r->isDeleted()) ++num_children;
-
-            if (num_children == 0) {
-                Node* parent = v->getParent();
-                if (parent) parent->mark();
-
-                if (active_node_count > 1) {
-                    v->markDeleted();
-                    --active_node_count;
-                }
-            }
-            else if (num_children == 1) {
-                // Thread-local RNG for sex assignment
-                v->setSex((rng() % 2 == 0) ? Sex::F : Sex::M);
-
-                Node* parent = v->getParent();
-                if (!parent || parent->isDeleted()) continue;
-
-                if (parent->getSex() == Sex::M && v->getSex() == Sex::F) {
-                    Node* grandparent = parent->getParent();
-                    if (!grandparent || grandparent->isDeleted()) continue;
-
-                    if (grandparent->getLeftChild() == parent)
-                        grandparent->setLeftChild(v);
-                    else if (grandparent->getRightChild() == parent)
-                        grandparent->setRightChild(v);
-
-                    v->setParent(grandparent);
-
-                    if (active_node_count > 1) {
-                        parent->markDeleted();
-                        --active_node_count;
-                    }
-                }
-            }
-        }
-    }
-
-    #pragma omp barrier
-}
-*/
 
 void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
     const int num_threads = std::thread::hardware_concurrency();
