@@ -26,11 +26,18 @@ double evaluate_serial(Node* node) {
     return result;
 }
 
+void print_tree(Node* node, int indent = 0) {
+    if (!node) return;
+    print_tree(node->getRightChild(), indent + 4);
+    std::cout << std::string(indent, ' ') << node->getString() << std::endl;
+    print_tree(node->getLeftChild(), indent + 4);
+}
+
 
 int main() {
     try {
-        Tree tree1 = full_tree_constructor(100);
-        Tree tree2 = full_tree_constructor(100); // clone for fair comparison
+        Tree tree1 = full_tree_constructor(5);
+        Tree tree2 = full_tree_constructor(5); // clone for fair comparison
 
         std::cout << "Tree constructed.\n";
 
@@ -38,9 +45,14 @@ int main() {
         auto start_contract = std::chrono::high_resolution_clock::now();
         Node* root_contract = tree1.getRoot();
 
+
+
         while (!(root_contract->is_leaf())) {
             rake(root_contract);
             compress(root_contract);
+
+            //debug 
+            print_tree(root_contract);
         }
 
         double result_contract = std::stod(root_contract->getString());

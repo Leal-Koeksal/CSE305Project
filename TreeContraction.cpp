@@ -19,7 +19,6 @@ double evaluateFunctionNode(const std::string& func_str, double x) {
     if (parseFunctionString(func_str, a, b)) {
         return a * x + b;
     }
-    // if parsing fails, you might want to throw or handle differently
     return 0.0;
 }
 

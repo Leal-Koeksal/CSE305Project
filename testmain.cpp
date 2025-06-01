@@ -138,7 +138,7 @@ int main() {
 
     std::cout << "After contraction :)" << std::endl;
 
-    print_tree(tree.get_root());
+    print_tree(tree.getRoot());
 
 
     return 0;
