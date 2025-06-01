@@ -90,12 +90,6 @@ void rake(Node* root) {
 
     //case 3: evaluate function at leaf child 
     for (Node* node : function_eval_nodes) {
-        //debug
-        //get child of node
-        Node* debug_child = node->getLeftChild() ? node->getLeftChild() : node->getRightChild();
-        std::cout << "func eval node: " << node->getString() << std::endl;
-        std::cout << "eval func at: " << debug_child->getString() << std::endl;
-
         double a, b;
         if (!parseFunctionString(node->getString(), a, b)) continue;
 
@@ -107,9 +101,6 @@ void rake(Node* root) {
 
         double x = std::stod(child->getString());
         double val = evaluateFunctionNode(node->getString(), x);
-
-        //debug 
-        std::cout << "result of eval: " << val << std::endl;
 
         node->setString(std::to_string(val));
         node->setEval(val);

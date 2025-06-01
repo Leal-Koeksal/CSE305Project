@@ -34,32 +34,21 @@ void print_tree(Node* node, int indent = 0) {
 }
 
 int main() {
-
-    Tree tree1 = full_tree_constructor(8);
+    int i = 20;
+    Tree tree1 = full_tree_constructor(i);
     Tree tree2 = tree1; // clone for fair comparison
 
-    std::cout << "Tree constructed.\n";
-
-    //print_tree(tree1.getRoot());
+    std::cout << "Tree constructed! It has " << i <<" nodes \n";
 
     // --- Tree Contraction (Sequential Rake + Compress) ---
     auto start_contract = std::chrono::high_resolution_clock::now();
     Node* root_contract = tree1.getRoot();
 
-    int i = 0;
-
     while (!(root_contract->is_leaf())) {
-            std::cout << "iteration: " << i << "\n" << std::endl;
 
             rake(root_contract);
             compress(root_contract);
-
-            //debug 
-            std::cout << "root_contract" << std::endl;
-            ++i;
     }
-
-    std::cout << "Final root string: " << root_contract->getString() << std::endl;
 
     double result_contract = std::stod(root_contract->getString());
     auto end_contract = std::chrono::high_resolution_clock::now();
