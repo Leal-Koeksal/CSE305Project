@@ -154,17 +154,12 @@ void randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root) {
     int p = n * std::log(std::log(n)) / std::log(n);
     int k = 1;
     const int c = 2;
-
-    // Phase 1: initial dynamic contractions with atomic counter
     std::atomic<int> active_node_count(count_active_nodes(nodes));
-
     while (k <= c * std::log(std::log(n))) {
-        if (active_node_count <= 1) break;  // Early exit if tree is reduced
+        if (active_node_count <= 1) break;
         dynamic_tree_contraction(nodes, root, active_node_count);
         k++;
     }
-
-    // Phase 2: randomized contractions
     while (active_node_count > 1) {
         randomized_contract(nodes, root, active_node_count);
     }
@@ -196,45 +191,34 @@ void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tre
 
     double alpha = 31.0 / 32.0;
     int k = 0, i = 0;
-
-    // Step (a) — Build x[i] sizes
     while (x[i] >= nodes.size() / std::log(nodes.size())) {
         x.push_back(std::ceil(alpha * x[i]));
         ++i;
     }
-
-    // Step (b) — Prepare RNG
     std::random_device rd;
     std::mt19937 gen(rd());
-
-    // Step (c) — Iteratively contract + sample
     while (k < i) {
-        // Contract current nodes
         std::atomic<int> active_node_count(count_active_nodes(nodes));
         randomized_contract(nodes, tree->root, active_node_count);
 
-        // Filter out deleted nodes (in-place)
         nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
                     [](Node* n) { return !n || n->isDeleted(); }),
                     nodes.end());
 
-        // Sample up to x[k+1] nodes randomly from the survivors
         std::vector<Node*> sampled;
         sampled.reserve(x[k + 1]);
 
         std::vector<int> indices(nodes.size());
-        std::iota(indices.begin(), indices.end(), 0);               // Fill indices 0..n-1
-        std::shuffle(indices.begin(), indices.end(), gen);          // Shuffle them
+        std::iota(indices.begin(), indices.end(), 0);
+        std::shuffle(indices.begin(), indices.end(), gen);
 
         for (int j = 0; j < x[k + 1] && j < (int)nodes.size(); ++j) {
-            sampled.push_back(nodes[indices[j]]);                   // Pick randomly
+            sampled.push_back(nodes[indices[j]]);
         }
 
-        nodes = std::move(sampled);  // Update the working set
+        nodes = std::move(sampled);
         ++k;
     }
-
-    // Step (d) — Final contraction to 1 node
     std::atomic<int> active_node_count(count_active_nodes(nodes));
     while (active_node_count > 1) {
         dynamic_tree_contraction(nodes, tree->root, active_node_count);
