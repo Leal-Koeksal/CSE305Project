@@ -11,7 +11,7 @@
 // This code was inspired from stack overflow:
 // https://stackoverflow.com/questions/44576857/randomly-pick-from-a-vector-in-c
 std::string get_random_operator() {
-    static const std::vector<std::string> ops = {"+", "-", "*", "/"};
+    static const std::vector<std::string> ops = {"+", "-", "*"};
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<> dist(0, ops.size() - 1);
     return ops[dist(rng)];
