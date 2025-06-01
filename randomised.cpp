@@ -4,11 +4,17 @@
 #include <unordered_map>
 #include <string>
 #include <stack>
+#include <atomic>
+#include <cmath>
 #include "Tree.h"
-
+#include <random>
+#include <algorithm>
+#include <iterator>
+#include <thread>
 
 std::vector<Node*> list_nodes(Tree& tree);
 
+// Arg(v) gives the number of children of v according to resource 2
 int Arg(Node* v) {
     int arg = 0;
     if (v->getLeftChild() && !v->getLeftChild()->hasValue()) ++arg;
@@ -16,6 +22,7 @@ int Arg(Node* v) {
     return arg;
 }
 
+// Costly function: to be called once
 int count_active_nodes(const std::vector<Node*>& nodes) {
     int count = 0;
     for (Node* node : nodes) {
@@ -26,33 +33,39 @@ int count_active_nodes(const std::vector<Node*>& nodes) {
     return count;
 }
 
-void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root) {
+/*
+void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
     #pragma omp parallel for
     for (int i = 0; i < (int)nodes.size(); ++i) {
         Node* v = nodes[i];
         if (!v || v->isDeleted()) continue;
+
         int num_children = 0;
         if (v->getLeftChild() && !v->getLeftChild()->isDeleted()) ++num_children;
         if (v->getRightChild() && !v->getRightChild()->isDeleted()) ++num_children;
 
         Node* parent = v->getParent();
         if (!parent || parent->isDeleted()) continue;
+
         int num_siblings = 0;
         if (parent->getLeftChild() && !parent->getLeftChild()->isDeleted()) ++num_siblings;
         if (parent->getRightChild() && !parent->getRightChild()->isDeleted()) ++num_siblings;
 
+        // Case 1: Leaf node — try to delete it
         if (num_children == 0) {
-            Node* parent = v->getParent();
-                if (parent) parent->mark();
+            if (parent) parent->mark();
 
-                // Delete if more than 1 node remains
-                if (count_active_nodes(nodes) > 1) {
-                    v->markDeleted();
-                }
+            if (active_node_count > 1) {
+                v->markDeleted();
+                --active_node_count;
+            }
         }
+
+        // Case 2: Contract if node has 1 child and parent has 1 child (== this node)
         else if (num_children == 1 && num_siblings == 1) {
             Node* grandparent = parent->getParent();
             if (!grandparent || grandparent->isDeleted()) continue;
+
             if (grandparent->getLeftChild() == parent) {
                 grandparent->setLeftChild(v);
             } else if (grandparent->getRightChild() == parent) {
@@ -62,52 +75,117 @@ void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root) {
             v->setParent(grandparent);
         }
     }
+
+    #pragma omp barrier  // Optional, ensures threads finish before function exits
 }
+*/
 
-void randomized_contract(std::vector<Node*>& nodes, Node* root) {
-    #pragma omp parallel for
-    for (int i = 0; i < (int)nodes.size(); ++i) {
-        Node* v = nodes[i];
-        if (!v || v->isDeleted()) continue;
+void dynamic_tree_contraction(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
+    const int num_threads = std::thread::hardware_concurrency(); // Number of concurrent threads supported
+    // Found at link: https://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency.html
+    std::vector<std::thread> threads;
 
-        int num_children = 0;
-        if (v->getLeftChild() && !v->getLeftChild()->isDeleted()) ++num_children;
-        if (v->getRightChild() && !v->getRightChild()->isDeleted()) ++num_children;
+    auto worker = [&](int start, int end) { // https://www.geeksforgeeks.org/lambda-expression-in-c/
+        for (int i = start; i < end; ++i) {
+            Node* v = nodes[i];
+            if (!v || v->isDeleted()) continue;
 
-        if (num_children == 0) {
-            Node* parent = v->getParent();
-            if (parent) parent->mark();
-
-            // Delete if more than 1 node remains
-            if (count_active_nodes(nodes) > 1) {
-                v->markDeleted();
-            }
-        }
-        else if (num_children == 1) {
-            v->setSex((rand() % 2 == 0) ? Sex::F : Sex::M);
+            int num_children = 0;
+            Node* l = v->getLeftChild();
+            Node* r = v->getRightChild();
+            if (l && !l->isDeleted()) ++num_children;
+            if (r && !r->isDeleted()) ++num_children;
 
             Node* parent = v->getParent();
             if (!parent || parent->isDeleted()) continue;
 
-            if (parent->getSex() == Sex::M && v->getSex() == Sex::F) {
+            int num_siblings = 0;
+            if (parent->getLeftChild() && !parent->getLeftChild()->isDeleted()) ++num_siblings;
+            if (parent->getRightChild() && !parent->getRightChild()->isDeleted()) ++num_siblings;
+
+            if (num_children == 0) {
+                if (parent) parent->mark();
+
+                if (active_node_count > 1) {
+                    v->markDeleted();
+                    --active_node_count;
+                }
+            } else if (num_children == 1 && num_siblings == 1) {
                 Node* grandparent = parent->getParent();
                 if (!grandparent || grandparent->isDeleted()) continue;
 
-
-                //Store 
-                // push_back but useless it seems 
-                // Update grandparent to point to v instead of parent
-                if (grandparent->getLeftChild() == parent) {
+                if (grandparent->getLeftChild() == parent)
                     grandparent->setLeftChild(v);
-                } else if (grandparent->getRightChild() == parent) {
+                else if (grandparent->getRightChild() == parent)
                     grandparent->setRightChild(v);
-                }
 
                 v->setParent(grandparent);
+            }
+        }
+    };
 
-                // Delete if more than 1 node remains
-                if (count_active_nodes(nodes) > 1) {
-                    parent->markDeleted();
+    int chunk_size = nodes.size() / num_threads;
+    for (int t = 0; t < num_threads; ++t) {
+        int start = t * chunk_size;
+        int end = (t == num_threads - 1) ? nodes.size() : (t + 1) * chunk_size;
+        threads.emplace_back(worker, start, end);
+    }
+
+    for (auto& thread : threads) thread.join();
+}
+
+
+/*
+void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
+    // Parallel contraction
+    #pragma omp parallel
+    {
+        // Thread-local RNG
+        std::mt19937 rng;
+        rng.seed(std::random_device{}() + omp_get_thread_num());
+
+        #pragma omp for
+        for (int i = 0; i < (int)nodes.size(); ++i) {
+            Node* v = nodes[i];
+            if (!v || v->isDeleted()) continue;
+
+            int num_children = 0;
+            Node* l = v->getLeftChild();
+            if (l && !l->isDeleted()) ++num_children;
+            Node* r = v->getRightChild();
+            if (r && !r->isDeleted()) ++num_children;
+
+            if (num_children == 0) {
+                Node* parent = v->getParent();
+                if (parent) parent->mark();
+
+                if (active_node_count > 1) {
+                    v->markDeleted();
+                    --active_node_count;
+                }
+            }
+            else if (num_children == 1) {
+                // Thread-local RNG for sex assignment
+                v->setSex((rng() % 2 == 0) ? Sex::F : Sex::M);
+
+                Node* parent = v->getParent();
+                if (!parent || parent->isDeleted()) continue;
+
+                if (parent->getSex() == Sex::M && v->getSex() == Sex::F) {
+                    Node* grandparent = parent->getParent();
+                    if (!grandparent || grandparent->isDeleted()) continue;
+
+                    if (grandparent->getLeftChild() == parent)
+                        grandparent->setLeftChild(v);
+                    else if (grandparent->getRightChild() == parent)
+                        grandparent->setRightChild(v);
+
+                    v->setParent(grandparent);
+
+                    if (active_node_count > 1) {
+                        parent->markDeleted();
+                        --active_node_count;
+                    }
                 }
             }
         }
@@ -115,22 +193,88 @@ void randomized_contract(std::vector<Node*>& nodes, Node* root) {
 
     #pragma omp barrier
 }
+*/
+
+void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count) {
+    const int num_threads = std::thread::hardware_concurrency();
+    std::vector<std::thread> threads;
+
+    auto worker = [&](int start, int end) {
+        std::mt19937 rng(std::random_device{}());
+        for (int i = start; i < end; ++i) {
+            Node* v = nodes[i];
+            if (!v || v->isDeleted()) continue;
+
+            int num_children = 0;
+            Node* l = v->getLeftChild();
+            Node* r = v->getRightChild();
+            if (l && !l->isDeleted()) ++num_children;
+            if (r && !r->isDeleted()) ++num_children;
+
+            if (num_children == 0) {
+                Node* parent = v->getParent();
+                if (parent) parent->mark();
+
+                if (active_node_count > 1) {
+                    v->markDeleted();
+                    --active_node_count;
+                }
+            } else if (num_children == 1) {
+                v->setSex((rng() % 2 == 0) ? Sex::F : Sex::M);
+
+                Node* parent = v->getParent();
+                if (!parent || parent->isDeleted()) continue;
+
+                if (parent->getSex() == Sex::M && v->getSex() == Sex::F) {
+                    Node* grandparent = parent->getParent();
+                    if (!grandparent || grandparent->isDeleted()) continue;
+
+                    if (grandparent->getLeftChild() == parent)
+                        grandparent->setLeftChild(v);
+                    else if (grandparent->getRightChild() == parent)
+                        grandparent->setRightChild(v);
+
+                    v->setParent(grandparent);
+
+                    if (active_node_count > 1) {
+                        parent->markDeleted();
+                        --active_node_count;
+                    }
+                }
+            }
+        }
+    };
+
+    int chunk_size = nodes.size() / num_threads;
+    for (int t = 0; t < num_threads; ++t) {
+        int start = t * chunk_size;
+        int end = (t == num_threads - 1) ? nodes.size() : (t + 1) * chunk_size;
+        threads.emplace_back(worker, start, end);
+    }
+
+    for (auto& thread : threads) thread.join();
+}
+
+
 
 void randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root) {
     int n = nodes.size();
     int p = n * std::log(std::log(n)) / std::log(n);
     int k = 1;
-    const int c = 2;  // Or some small constant
-    
-    while (k <= c * std::log(std::log(n))) {
-        dynamic_tree_contraction(nodes, root);  // using p processors
+    const int c = 2;
 
-        // Prefix sum logic or processor assignment if needed
+    // Phase 1: initial dynamic contractions with atomic counter
+    std::atomic<int> active_node_count(count_active_nodes(nodes));
+
+    while (k <= c * std::log(std::log(n))) {
+        if (active_node_count <= 1) break;  // Early exit if tree is reduced
+        dynamic_tree_contraction(nodes, root, active_node_count);
         k++;
     }
 
-    while (count_active_nodes(nodes) > 1) {
-        randomized_contract(nodes, root);
+    // Phase 2: randomized contractions
+    while (active_node_count > 1) {
+        randomized_contract(nodes, root, active_node_count);
     }
 }
 
@@ -160,81 +304,52 @@ void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tre
 
     double alpha = 31.0 / 32.0;
     int k = 0, i = 0;
-    std::vector<Tree*> T;
-    T.push_back(tree);
 
-    // Step (a)
-    while (x[i] >= nodes.size() / log(nodes.size())) {
-        x.push_back(ceil(alpha * x[i]));
-        i++;
+    // Step (a) — Build x[i] sizes
+    while (x[i] >= nodes.size() / std::log(nodes.size())) {
+        x.push_back(std::ceil(alpha * x[i]));
+        ++i;
     }
 
-    // Step (b): Generate permutations π₁, ..., πᵢ
-    std::vector<std::vector<int>> permutations(i);
-    #pragma omp parallel for
-    for (int j = 0; j < i; ++j) {
-        permutations[j] = generate_random_permutation(x[j]);
-    }
+    // Step (b) — Prepare RNG
+    std::random_device rd;
+    std::mt19937 gen(rd());
 
-    // Step (c)
+    // Step (c) — Iteratively contract + sample
     while (k < i) {
-        std::vector<Node*> nodesT_k = list_nodes(*T[k]);
-        randomized_contract(nodesT_k, T[k]->root);
-    
-        std::vector<Node*> permuted;
-        for (int idx : permutations[k]) {
-            if (idx < nodesT_k.size()) {
-                permuted.push_back(nodesT_k[idx]);
-            }
+        // Contract current nodes
+        std::atomic<int> active_node_count(count_active_nodes(nodes));
+        randomized_contract(nodes, tree->root, active_node_count);
+
+        // Filter out deleted nodes (in-place)
+        nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
+                    [](Node* n) { return !n || n->isDeleted(); }),
+                    nodes.end());
+
+        // Sample up to x[k+1] nodes randomly from the survivors
+        std::vector<Node*> sampled;
+        sampled.reserve(x[k + 1]);
+
+        std::vector<int> indices(nodes.size());
+        std::iota(indices.begin(), indices.end(), 0);               // Fill indices 0..n-1
+        std::shuffle(indices.begin(), indices.end(), gen);          // Shuffle them
+
+        for (int j = 0; j < x[k + 1] && j < (int)nodes.size(); ++j) {
+            sampled.push_back(nodes[indices[j]]);                   // Pick randomly
         }
-    
-        discard_zeros(permuted, x[k + 1]);
-        nodes = permuted;
-    
-        Tree* new_tree = new Tree{T[k]->root};  // or updated root
-        T.push_back(new_tree);
-    
-        k++;
+
+        nodes = std::move(sampled);  // Update the working set
+        ++k;
     }
 
-    // Step (d): Final contraction until |T| == 1
-    while (count_active_nodes(nodes) > 1) {
-        dynamic_tree_contraction(nodes, tree->root);
-    }
-
-    for (size_t j = 1; j < T.size(); ++j) {
-        T[j]->root = nullptr;  // prevent destructor from double-freeing
-        delete T[j];
+    // Step (d) — Final contraction to 1 node
+    std::atomic<int> active_node_count(count_active_nodes(nodes));
+    while (active_node_count > 1) {
+        dynamic_tree_contraction(nodes, tree->root, active_node_count);
+        nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
+                    [](Node* n) { return !n || n->isDeleted(); }),
+                    nodes.end());
     }
 }
-
-/*
-void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree) {
-    std::vector<int> x = std::vector<int>();
-    x.push_back(nodes.size());
-    double alpha = 31/32;
-    int k = 0;
-    int i = 0;
-    std::vector<Tree*> T = std::vector<Tree*>();
-    T.push_back(tree);
-    while (x[i] >= nodes.size() / (log(nodes.size()))) {
-        x.push_back(ceil(alpha*x[i]));
-        i ++;
-    }
-    #pragma omp parallel for
-    for (int j = 0; j < i; ++j) {
-        // generate permutations pi_1, ..., pi_i of sizes x[0], ..., x[i] respectively
-    }
-    while (k < i) {
-        T.push_back(randomized_contract(T[k])); // using p processors
-        // permute the pointers of T[k+1] using pi_{k+1}
-        // apply the discard zeros to the list of pointers T[k+1] returning at most x[k+1]
-        k++;
-    }
-    while (count_active_nodes(nodes) > 1) {
-        dynamic_tree_contraction(nodes, tree->root); // using a distinct processor at each vertex
-    }
-}
-*/
 
 // clang++ -std=c++17 -Xpreprocessor -fopenmp -I/opt/homebrew/include -L/opt/homebrew/lib -lomp main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp randomised.cpp -std=c++17 -pthread -o main

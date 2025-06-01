@@ -5,8 +5,9 @@
 Tree tree_constructor(int n);
 std::vector<Node*> list_nodes(Tree& tree);
 double evaluate_parallel(Node* node);
-void randomized_contract(std::vector<Node*>& nodes, Node* root); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
+void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
 void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree);
+int count_active_nodes(const std::vector<Node*>& nodes);
 
 double evaluate_serial(Node* node) {
     if (!node) return 0;
@@ -59,7 +60,8 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         // 1. Call randomized contraction
-        randomized_contract(nodes, tree.root);
+        std::atomic<int> active_node_count(count_active_nodes(nodes));
+        randomized_contract(nodes, tree.root, active_node_count);
 
         // 2. Find the final surviving node and evaluate
         for (Node* node : nodes) {
@@ -102,44 +104,6 @@ int main() {
 
     return 0;
 }
-
-/*
-int main() {
-    // Create leaf nodes
-    Node* n3 = new Node("3");
-    Node* n5 = new Node("5");
-    Node* n2 = new Node("2");
-    Node* n1 = new Node("1");
-
-    // Create operator nodes
-    Node* plus = new Node("+", n3, n5);
-    Node* minus = new Node("-", n2, n1);
-    Node* mult = new Node("*", plus, minus);
-
-    // Set parents
-    n3->setParent(plus);
-    n5->setParent(plus);
-    n2->setParent(minus);
-    n1->setParent(minus);
-    plus->setParent(mult);
-    minus->setParent(mult);
-
-    // Collect all nodes into a vector for processing
-    std::vector<Node*> nodes = { mult, plus, minus, n3, n5, n2, n1 };
-
-    // Run randomized contraction
-    randomized_contract(nodes, mult);
-
-    // Print which nodes are deleted
-    std::cout << "Deleted nodes after contraction:\n";
-    for (Node* node : nodes) {
-        std::cout << node->getString() << ": "
-                  << (node->isDeleted() ? "deleted" : "active") << "\n";
-    }
-    std::cout << "Final result: " << mult->getEval() << std::endl;
-    return 0;
-}
-*/
 
 // g++ main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp -std=c++17 -pthread -o main
 // ./main

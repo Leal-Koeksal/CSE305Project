@@ -27,18 +27,18 @@ public:
 
     std::string getString();
     Node* getLeftChild();
-    void setLeftChild(Node* child) { left = child; }
+    void setLeftChild(Node* child);
     Node* getRightChild();
-    void setRightChild(Node* child) { right = child; }
+    void setRightChild(Node* child);
     Node* getParent();
     void setParent(Node* parent);
-    Sex getSex() const { return sex; }
-    void setSex(Sex s) { sex = s; }
+    Sex getSex() const;
+    void setSex(Sex s);
 
-    bool isMarked() const { return marked; }
-    void mark() { marked = true; }
-    void unmark() { marked = false; }
-    void markParent() { parent->mark(); }
+    bool isMarked() const;
+    void mark();
+    void unmark();
+    void markParent();
 
     bool isDeleted() const;
     void markDeleted();
