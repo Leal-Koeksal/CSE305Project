@@ -34,7 +34,7 @@ void print_tree(Node* node, int indent = 0) {
 }
 
 int main() {
-    int i = 20;
+    int i = 5000;
     Tree tree1 = full_tree_constructor(i);
     Tree tree2 = tree1; // clone for fair comparison
 
