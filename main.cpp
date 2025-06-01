@@ -2,7 +2,9 @@
 #include <chrono>
 #include "Tree.h"
 
-Tree tree_constructor(int n);
+Tree full_tree_constructor(int n);
+Tree random_tree_constructor(int n);
+Tree most_unbalanced_tree_constructor(int height);
 std::vector<Node*> list_nodes(Tree& tree);
 double evaluate_parallel(Node* node);
 void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
@@ -35,8 +37,11 @@ double evaluate_serial(Node* node) {
 
 int main() {
     try {
-        Tree tree = tree_constructor(100000);
+        // Tree tree = full_tree_constructor(1000000);
+        // Tree tree = most_unbalanced_tree_constructor(100);
+        Tree tree = random_tree_constructor(1000);
         std::vector<Node*> nodes = list_nodes(tree);
+        std::cout << "Tree is constructed.\n";
 
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
@@ -46,6 +51,7 @@ int main() {
 
         std::cout << "Serial Result: " << result_serial << "\n";
         std::cout << "Serial Time: " << elapsed_serial.count() << " seconds\n";
+
         // --- Parallel Evaluation Timer ---
         auto start_parallel = std::chrono::high_resolution_clock::now();
         double result_parallel = evaluate_parallel(tree.root);
@@ -54,7 +60,6 @@ int main() {
 
         std::cout << "Parallel Result: " << result_parallel << "\n";
         std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
-
         // --- Randomised Parallel Evaluation Timer ---
 
         auto start = std::chrono::high_resolution_clock::now();
@@ -66,7 +71,7 @@ int main() {
         // 2. Find the final surviving node and evaluate
         for (Node* node : nodes) {
             if (node && !node->isDeleted()) {
-                evaluate_serial(node);  // ⬅️ This must be called here
+                evaluate_serial(node);  // This must be called here
                 std::cout << "Randomised Parallel Result: " << node->getEval() << std::endl;
                 break;
             }
@@ -92,7 +97,6 @@ int main() {
         auto end_optimal = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> time_optimal = end_optimal - start_optimal;
         std::cout << "Optimal Randomised Time: " << time_optimal.count() << " seconds\n";
-
 
     } catch (const std::exception& ex) {
         std::cerr << "Unhandled exception: " << ex.what() << std::endl;

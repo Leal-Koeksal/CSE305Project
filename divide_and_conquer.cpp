@@ -1,29 +1,35 @@
+
 #include <thread>
 #include <future>
 #include <stdexcept>
 #include <limits>
 #include <string>
 #include "Tree.h"
+#include <iostream>
 
 constexpr int MAX_PARALLEL_DEPTH = 2;
 
-double evaluate(Node* node, int depth = 0) {
-    if (!node) throw std::runtime_error("Node is null");
 
-    if (node->is_leaf()) {
-        if (node->is_op()) throw std::runtime_error("Invalid leaf node with operator");
-        return std::stod(node->getString());
+double evaluate(Node* node) {
+    if (!node) return 0;
+    if (node->hasValue()) return node->getEval();
+    if (node->is_leaf() && !node->is_op()) {
+        double val = std::stod(node->getString());
+        node->setEval(val);
+        return val;
     }
-
-    double left = evaluate(node->getLeftChild(), depth + 1);
-    double right = evaluate(node->getRightChild(), depth + 1);
+    double left = evaluate(node->getLeftChild());
+    double right = evaluate(node->getRightChild());
+    double result = 0;
 
     std::string op = node->getString();
-    if (op == "+") return left + right;
-    else if (op == "-") return left - right;
-    else if (op == "*") return left * right;
-    else if (op == "/") return right != 0 ? left / right : std::numeric_limits<double>::infinity();
-    else throw std::runtime_error("Unknown operator: " + op);
+    if (op == "+") result = left + right;
+    else if (op == "-") result = left - right;
+    else if (op == "*") result = left * right;
+    else if (op == "/") result = (right != 0 ? left / right : std::numeric_limits<double>::infinity());
+
+    node->setEval(result);
+    return result;
 }
 
 void evaluate_parallel(Node* node, std::shared_ptr<std::promise<double>> result_promise, int depth = 0) {
@@ -49,14 +55,14 @@ void evaluate_parallel(Node* node, std::shared_ptr<std::promise<double>> result_
             });
 
             // Evaluate right subtree in this thread
-            right_result = evaluate(node->getRightChild(), depth + 1);
+            right_result = evaluate(node->getRightChild());
 
             left_thread.join();
+
         } else {
             // Evaluate both subtrees sequentially
-            double left = evaluate(node->getLeftChild(), depth + 1);
-            double right = evaluate(node->getRightChild(), depth + 1);
-
+            double left = evaluate(node->getLeftChild());
+            double right = evaluate(node->getRightChild());
             std::string op = node->getString();
             if (op == "+") result_promise->set_value(left + right);
             else if (op == "-") result_promise->set_value(left - right);
@@ -65,7 +71,6 @@ void evaluate_parallel(Node* node, std::shared_ptr<std::promise<double>> result_
             else throw std::runtime_error("Unknown operator: " + op);
             return;
         }
-
         // Merge left and right results
         double left_result = left_future.get();
         std::string op = node->getString();

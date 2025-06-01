@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 
-double evaluate_parallel(Node* node);
+// double evaluate_parallel(Node* node);
 
 Tree::Tree(Node* root) : root(root) {}
 
