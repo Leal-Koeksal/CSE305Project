@@ -1,12 +1,4 @@
-#include <random>
-#include <vector>
-#include <string>
-#include <ctime>
-#include <algorithm>
-#include <stack>
-#include <stdexcept>
-#include <functional>
-#include "Tree.h"
+#include "tree_constructor2.h"
 
 // This code was inspired from stack overflow:
 // https://stackoverflow.com/questions/44576857/randomly-pick-from-a-vector-in-c
@@ -19,7 +11,7 @@ std::string get_random_operator() {
 
 std::string get_random_number() {
     static std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<> dist(0.1, 1); // Avoid zero for division (easier)
+    std::uniform_real_distribution<> dist(0.1, 1000); // Avoid zero for division (easier)
     return std::to_string(dist(rng));
 }
 

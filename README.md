@@ -6,6 +6,10 @@ This project provides implementations of various algorithms for evaluating expre
 * **Fixed-Thread Parallel Evaluation**: Spawns up to a configurable maximum number of threads to evaluate subtrees concurrently.
 * **Randomized Contraction Evaluation**: Repeatedly contracts random nodes in parallel until one node remains.
 * **Optimal Randomized Evaluation**: A refined, theoretically optimal randomized contraction strategy.
+* **Sequential Tree Contraction**: Performs expression evaluation by **contracting internal nodes** recursively, one at a time, until only a single node remains. All operations are done modulo `6101`.
+* **Parallel Tree Contraction**: An optimized version of tree contraction that performs **parallel contraction and function composition** on expression trees. Compiles but the result is not correct.
+
+
 
 Each algorithm can be benchmarked on different tree shapes:
 
@@ -41,6 +45,47 @@ Each algorithm can be benchmarked on different tree shapes:
    ```bash
    ./tree_eval
    ```
+
+**Compile Sequential Tree Contraction**: 
+``` 
+g++ -std=c++17 seqmain.cpp Tree.cpp Node.cpp TreeContraction.cpp -o seqmain -pthread
+```
+
+Run:
+```
+./seqmain
+```
+
+Example Output:
+```
+Tree constructed! It has 10000 nodes 
+[Contraction] Result: 2450
+[Contraction] Time: 0.312123 seconds
+[Serial Recursion] Result: 2450
+[Serial Recursion] Time: 6e-07 seconds
+```
+
+**Compile Parallel Tree Contraction**: 
+``` 
+g++ -std=c++17 -O2 -pthread parallelmain.cpp TreeContrParallel.cpp TreeContraction.cpp tree_constructor2.cpp Tree.cpp Node.cpp ThreadPool.cpp -o tree_run
+```
+
+Run:
+```
+./tree_run
+```
+
+Example Output:
+```
+Tree created 
+[Serial Recursion] Result: 834
+[Serial Recursion] Time: 0.0001221 seconds
+No. threads used: 1
+ Size of batch: 15
+[Final Contracted Tree]
+[Contraction] Result: 1231
+[Contraction] Time: 0.0023639 seconds
+```
 
 ---
 
@@ -88,9 +133,12 @@ Optimal Randomised Time: 1.2041e-05 seconds
 
 ## File Structure
 
-* `main.cpp` — Driver program and timing harness.
+* `main.cpp` / `seqmain.cpp` / `parallelmain.cpp`  — Driver program and timing harness.
 * `Tree.h` / `Tree.cpp` — Tree data structure, constructors, and serial evaluation.
 * `Node.cpp` / `Node.h` — Representation of individual nodes.
 * `tree_constructor.cpp` — Implementations of the three tree constructors.
 * `divide_and_conquer.cpp` — Fixed-thread parallel evaluation logic.
 * `randomised.cpp` — Randomized contraction and optimal randomized algorithms.
+* `tree_constructor2.cpp` / `tree_constructor2.h` - Implementations of the three tree constructors without division.
+* `TreeContract.cpp` / `TreeConract.h` - Sequential contraction logic.
+* `TreeContrParallel.cpp` / `TreeContrParallel.h` - Parallel contraction logic. 
