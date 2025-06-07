@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <mutex>
 
 enum class Sex { UNASSIGNED, M, F };
 
@@ -13,6 +14,9 @@ class Node {
     Node* left = nullptr;
     Node* right = nullptr;
     Node* parent = nullptr;
+
+    // parallel tree contraction
+    std::mutex node_mutex; 
 
     // Meta data (for randomised tree evaluation)
     bool deleted = false;
@@ -59,6 +63,8 @@ public:
     void setRightChild(Node*);
     void setParent(Node*);
     void setString(const std::string& val);
+
+    std::mutex& getMutex();
 
     // linear function: a*x + b -> a,b
     bool eval_function(double); // function is the node

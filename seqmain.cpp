@@ -15,12 +15,16 @@ double evaluate_serial(Node* node) {
     double left = evaluate_serial(node->getLeftChild());
     double right = evaluate_serial(node->getRightChild());
     double result = 0;
-
     std::string op = node->getString();
-    if (op == "+") result = left + right;
-    else if (op == "-") result = left - right;
-    else if (op == "*") result = left * right;
-    else if (op == "/") result = (right != 0 ? left / right : std::numeric_limits<double>::infinity());
+
+    int l = static_cast<int>(left);
+    int r = static_cast<int>(right);
+
+
+    if (op == "+") result = (l + r) % 6101;
+    else if (op == "-") result = ((l - r) % 6101 + 6101) % 6101;
+    else if (op == "*") result = (l * r) % 6101;
+    else if (op == "/") result = (r != 0 ? (l / r) % 6101 : std::numeric_limits<double>::infinity());
 
     node->setEval(result);
     return result;
@@ -33,8 +37,13 @@ void print_tree(Node* node, int indent = 0) {
     print_tree(node->getLeftChild(), indent + 4);
 }
 
+int count_nodes(Node* root) {
+    if (!root || root->isDeleted()) return 0;
+    return 1 + count_nodes(root->getLeftChild()) + count_nodes(root->getRightChild());
+}
+
 int main() {
-    int i = 5;
+    int i = 10000;
     Tree tree1 = full_tree_constructor(i);
     Tree tree2 = tree1; // clone for fair comparison
 
@@ -44,10 +53,20 @@ int main() {
     auto start_contract = std::chrono::high_resolution_clock::now();
     Node* root_contract = tree1.getRoot();
 
+    int iteration = 0;
+    int last_count = -1;
     while (!(root_contract->is_leaf())) {
+        rake(root_contract);
+        compress(root_contract);
 
-            rake(root_contract);
-            compress(root_contract);
+        int active_nodes = count_nodes(root_contract); // You'll need to implement this
+        //std::cout << "Iteration " << iteration++ << ", Active nodes: " << active_nodes << "\n";
+
+        if (active_nodes == last_count) {
+            std::cerr << "[Error] No progress in contraction; possible infinite loop.\n";
+            break;
+        }
+        last_count = active_nodes;
     }
 
     double result_contract = std::stod(root_contract->getString());
@@ -56,7 +75,6 @@ int main() {
 
     std::cout << "[Contraction] Result: " << result_contract << "\n";
     std::cout << "[Contraction] Time: " << elapsed_contract.count() << " seconds\n";
-
 
     // --- Serial Recursive Evaluation ---
     auto start_serial = std::chrono::high_resolution_clock::now();
