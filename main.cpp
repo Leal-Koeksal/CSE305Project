@@ -38,9 +38,9 @@ double evaluate_serial(Node* node) {
 
 int main() {
     try {
-        Tree tree = full_tree_constructor(100000);
+        // Tree tree = full_tree_constructor(100000);
         // Tree tree = most_unbalanced_tree_constructor(100);
-        // Tree tree = random_tree_constructor(100);
+        Tree tree = random_tree_constructor(1000);
         std::vector<Node*> nodes = list_nodes(tree);
         std::cout << "Tree is constructed.\n";
 
@@ -110,5 +110,5 @@ int main() {
     return 0;
 }
 
-// g++ main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp -std=c++17 -pthread -o main
+// clang++ -std=c++17 -Xpreprocessor -fopenmp -I/opt/homebrew/include -L/opt/homebrew/lib -lomp main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp randomised.cpp -std=c++17 -pthread -o main
 // ./main
