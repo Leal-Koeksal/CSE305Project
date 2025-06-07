@@ -37,7 +37,7 @@ double evaluate_serial(Node* node) {
 }
 
 int main() {
-    int n = 500;
+    int n = 100;
     Tree tree1 = full_tree_constructor(n);
 
     //debug
