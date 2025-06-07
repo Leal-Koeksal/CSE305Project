@@ -20,7 +20,7 @@ class Node {
     double eval = 0.0;
     bool is_value_set = false;
     Sex sex = Sex::UNASSIGNED;
-    
+
 public:
     Node(const std::string& x);
     Node(const std::string& x, Node* left, Node* right);
@@ -60,8 +60,6 @@ public:
     void setRightChild(Node*);
     void setParent(Node*);
     void setString(const std::string& val);
-
-    std::mutex& getMutex();
 
     // linear function: a*x + b -> a,b
     bool eval_function(double); // function is the node

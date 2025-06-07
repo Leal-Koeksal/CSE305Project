@@ -61,7 +61,6 @@ void Node::setString(const std::string& val) {
     x = val;
 }
 
-
 bool Node::eval_function(double x) {
     // Matches strings like "a,b"
     static std::regex func_pattern(R"(^(-?\d*\.?\d+),(-?\d*\.?\d+)$)");
