@@ -9,7 +9,7 @@ Tree full_tree_constructor(int n);
 Tree random_tree_constructor(int n);
 Tree most_unbalanced_tree_constructor(int height);
 std::vector<Node*> list_nodes(Tree& tree);
-double evaluate_parallel(Node* node);
+double evaluate_parallel(Node* node, int MAX_THREADS);
 void randomized_contract(std::vector<Node*>& nodes, Node* root, std::atomic<int>& active_node_count); //randomized_tree_evaluation(std::vector<Node*>& nodes, Node* root);
 void optimal_randomised_tree_evaluation_algorithm(std::vector<Node*>& nodes, Tree* tree);
 int count_active_nodes(const std::vector<Node*>& nodes);
@@ -40,9 +40,9 @@ double evaluate_serial(Node* node) {
 
 int main() {
     try {
-        Tree tree = full_tree_constructor(100000);
-        // Tree tree = most_unbalanced_tree_constructor(100);
-        // Tree tree = random_tree_constructor(100);
+        //Tree tree = full_tree_constructor(1000000);
+        // Tree tree = most_unbalanced_tree_constructor(1000);
+        Tree tree = random_tree_constructor(1000);
         std::vector<Node*> nodes = list_nodes(tree);
         std::cout << "Tree is constructed.\n";
 
@@ -56,13 +56,17 @@ int main() {
         std::cout << "Serial Time: " << elapsed_serial.count() << " seconds\n";
 
         // --- Parallel Evaluation Timer ---
-        auto start_parallel = std::chrono::high_resolution_clock::now();
-        double result_parallel = evaluate_parallel(tree.root);
-        auto end_parallel = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed_parallel = end_parallel - start_parallel;
+        for (int i = 1; i<11; i++) {
+            auto start_parallel = std::chrono::high_resolution_clock::now();
+            double result_parallel = evaluate_parallel(tree.root, 1);
+            auto end_parallel = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed_parallel = end_parallel - start_parallel;
+    
+            std::cout << "Max threads: " << i << "\n";
+            std::cout << "Parallel Result: " << result_parallel << "\n";
+            std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
+        }
 
-        std::cout << "Parallel Result: " << result_parallel << "\n";
-        std::cout << "Parallel Time: " << elapsed_parallel.count() << " seconds\n";
         // --- Randomised Parallel Evaluation Timer ---
 
         auto start = std::chrono::high_resolution_clock::now();
