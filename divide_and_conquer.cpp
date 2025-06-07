@@ -106,6 +106,8 @@ double evaluate_parallel(Node* node) {
 #include "Tree.h"
 #include <iostream>
 
+constexpr int LARGE_PRIME = 6101;
+
 // Maximum number of threads we ever want to have running at once:
 constexpr int MAX_THREADS = 4;  
 // (You can tweak this, or use std::thread::hardware_concurrency() if you like.)
@@ -130,10 +132,10 @@ double evaluate(Node* node) {
     double result = 0.0;
     std::string op = node->getString();
 
-    if      (op == "+") result = left + right;
-    else if (op == "-") result = left - right;
-    else if (op == "*") result = left * right;
-    else if (op == "/") result = (right != 0.0 ? left / right : std::numeric_limits<double>::infinity());
+    if      (op == "+") result = std::fmod(left + right, static_cast<double>(LARGE_PRIME));
+    else if (op == "-") result = std::fmod(left - right, static_cast<double>(LARGE_PRIME));
+    else if (op == "*") result = std::fmod(left * right, static_cast<double>(LARGE_PRIME));
+    else if (op == "/") result = (right != 0.0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity());
     else throw std::runtime_error("Unknown operator in evaluate(): " + op);
 
     node->setEval(result);
@@ -207,10 +209,10 @@ void evaluate_parallel(
 
             std::string op = node->getString();
             double result = 0.0;
-            if      (op == "+") result = left_val + right_result;
-            else if (op == "-") result = left_val - right_result;
-            else if (op == "*") result = left_val * right_result;
-            else if (op == "/") result = (right_result != 0.0 ? left_val / right_result
+            if      (op == "+") result = std::fmod(left_val + right_result, static_cast<double>(LARGE_PRIME));
+            else if (op == "-") result = std::fmod(left_val - right_result, static_cast<double>(LARGE_PRIME));
+            else if (op == "*") result = std::fmod(left_val * right_result, static_cast<double>(LARGE_PRIME));
+            else if (op == "/") result = (right_result != 0.0 ? std::fmod(left_val / right_result, static_cast<double>(LARGE_PRIME))
                                                                : std::numeric_limits<double>::infinity());
             else throw std::runtime_error("Unknown operator: " + op);
 
@@ -224,11 +226,11 @@ void evaluate_parallel(
         // Now combine left_result and right_result with the current node’s operator:
         std::string op = node->getString();
         double final_res = 0.0;
-        if (op == "+") final_res = left_result + right_result;
-        else if (op == "-") final_res = left_result - right_result;
-        else if (op == "*") final_res = left_result * right_result;
+        if (op == "+") final_res = std::fmod(left_result + right_result, static_cast<double>(LARGE_PRIME));
+        else if (op == "-") final_res = std::fmod(left_result - right_result, static_cast<double>(LARGE_PRIME));
+        else if (op == "*") final_res = std::fmod(left_result * right_result, static_cast<double>(LARGE_PRIME));
         else if (op == "/") final_res = (right_result != 0.0 
-                                         ? left_result / right_result 
+                                         ? std::fmod(left_result / right_result, static_cast<double>(LARGE_PRIME))
                                          : std::numeric_limits<double>::infinity());
         else throw std::runtime_error("Unknown operator: " + op);
 

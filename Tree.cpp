@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 
+constexpr int LARGE_PRIME = 6101;
 // double evaluate_parallel(Node* node);
 
 Tree::Tree(Node* root) : root(root) {}
@@ -34,10 +35,10 @@ double Tree::evaluate(Node* node) const {
     double right = evaluate(node->getRightChild());
 
     std::string op = node->getString();
-    if (op == "+") return left + right;
-    if (op == "-") return left - right;
-    if (op == "*") return left * right;
-    if (op == "/") return right != 0 ? left / right : std::numeric_limits<double>::infinity();
+    if (op == "+") return std::fmod(left + right, static_cast<double>(LARGE_PRIME));
+    if (op == "-") return std::fmod(left - right, static_cast<double>(LARGE_PRIME));
+    if (op == "*") return std::fmod(left * right, static_cast<double>(LARGE_PRIME));
+    if (op == "/") return right != 0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity();
 
     return 0;
 }

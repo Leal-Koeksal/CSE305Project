@@ -3,6 +3,8 @@
 #include <atomic>
 #include "Tree.h"
 
+constexpr int LARGE_PRIME = 6101; 
+
 Tree full_tree_constructor(int n);
 Tree random_tree_constructor(int n);
 Tree most_unbalanced_tree_constructor(int height);
@@ -26,10 +28,10 @@ double evaluate_serial(Node* node) {
     double result = 0;
 
     std::string op = node->getString();
-    if (op == "+") result = left + right;
-    else if (op == "-") result = left - right;
-    else if (op == "*") result = left * right;
-    else if (op == "/") result = (right != 0 ? left / right : std::numeric_limits<double>::infinity());
+    if (op == "+") result = std::fmod(left + right, static_cast<double>(LARGE_PRIME)); // (left + right) % LARGE_PRIME;
+    else if (op == "-") result = std::fmod(left - right, static_cast<double>(LARGE_PRIME));
+    else if (op == "*") result = std::fmod(left * right, static_cast<double>(LARGE_PRIME));
+    else if (op == "/") result = (right != 0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity());
 
     node->setEval(result);
     return result;
@@ -38,9 +40,9 @@ double evaluate_serial(Node* node) {
 
 int main() {
     try {
-        // Tree tree = full_tree_constructor(100000);
+        Tree tree = full_tree_constructor(100000);
         // Tree tree = most_unbalanced_tree_constructor(100);
-        Tree tree = random_tree_constructor(1000);
+        // Tree tree = random_tree_constructor(100);
         std::vector<Node*> nodes = list_nodes(tree);
         std::cout << "Tree is constructed.\n";
 
