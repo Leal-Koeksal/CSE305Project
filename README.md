@@ -9,7 +9,7 @@ This project provides implementations of various algorithms for evaluating expre
 
 Each algorithm can be benchmarked on different tree shapes:
 
-* **Full (Complete) Tree**: A full binary tree tree with a specified number of leaves.
+* **Full Tree**: A full binary tree tree with a specified number of leaves.
 * **Most-Unbalanced Tree**: A left skewed binary tree of a given height, where every left child is an operator and every right child is a number.
 * **Random Tree**: A binary tree whose shape is randomly generated up to a specified height.
 
