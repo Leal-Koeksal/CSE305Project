@@ -35,15 +35,21 @@ double Tree::evaluate(Node* node) const {
     double left = evaluate(node->getLeftChild());
     double right = evaluate(node->getRightChild());
 
-    int l = static_cast<int>(left);
-    int r = static_cast<int>(right);
+    //int l = static_cast<int>(left);
+    //int r = static_cast<int>(right);
 
     std::string op = node->getString();
   
+    /*
     if (op == "+") return std::fmod(l + r, static_cast<double>(LARGE_PRIME));
     if (op == "-") return std::fmod(l - r, static_cast<double>(LARGE_PRIME));
     if (op == "*") return std::fmod(l * r, static_cast<double>(LARGE_PRIME));
     if (op == "/") return r != 0 ? std::fmod(l / r, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity();
+    */
+   if (op == "+") return std::fmod(left + right, static_cast<double>(LARGE_PRIME));
+   if (op == "-") return std::fmod(left - right, static_cast<double>(LARGE_PRIME));
+   if (op == "*") return std::fmod(left * right, static_cast<double>(LARGE_PRIME));
+   if (op == "/") return right != 0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity();
 
     return 0;
 }

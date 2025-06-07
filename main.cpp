@@ -28,7 +28,7 @@ double evaluate_serial(Node* node) {
     double result = 0;
 
     std::string op = node->getString();
-    if (op == "+") result = std::fmod(left + right, static_cast<double>(LARGE_PRIME)); // (left + right) % LARGE_PRIME;
+    if (op == "+") result = std::fmod(left + right, static_cast<double>(LARGE_PRIME));
     else if (op == "-") result = std::fmod(left - right, static_cast<double>(LARGE_PRIME));
     else if (op == "*") result = std::fmod(left * right, static_cast<double>(LARGE_PRIME));
     else if (op == "/") result = (right != 0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity());
@@ -37,18 +37,17 @@ double evaluate_serial(Node* node) {
     return result;
 }
 
-
 int main() {
     try {
         //Tree tree = full_tree_constructor(1000000);
-        // Tree tree = most_unbalanced_tree_constructor(1000);
-        Tree tree = random_tree_constructor(1000);
+        //Tree tree = most_unbalanced_tree_constructor(1000);
+        Tree tree = random_tree_constructor(50);
         std::vector<Node*> nodes = list_nodes(tree);
         std::cout << "Tree is constructed.\n";
 
         // --- Serial Evaluation Timer ---
         auto start_serial = std::chrono::high_resolution_clock::now();
-        double result_serial = tree.evaluate();
+        int result_serial = tree.evaluate();
         auto end_serial = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed_serial = end_serial - start_serial;
 
@@ -56,9 +55,9 @@ int main() {
         std::cout << "Serial Time: " << elapsed_serial.count() << " seconds\n";
 
         // --- Parallel Evaluation Timer ---
-        for (int i = 1; i<11; i++) {
+        for (int i = 2; i<3; i++) {
             auto start_parallel = std::chrono::high_resolution_clock::now();
-            double result_parallel = evaluate_parallel(tree.root, 1);
+            int result_parallel = evaluate_parallel(tree.root, i);
             auto end_parallel = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed_parallel = end_parallel - start_parallel;
     
