@@ -19,7 +19,7 @@ std::string get_random_operator() {
 
 std::string get_random_number() {
     static std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<> dist(0.1, 1); // Avoid zero for division (easier)
+    std::uniform_real_distribution<> dist(0.1, 1000); // Avoid zero for division (easier)
     return std::to_string(dist(rng));
 }
 

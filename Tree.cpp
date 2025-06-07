@@ -39,6 +39,7 @@ double Tree::evaluate(Node* node) const {
     int r = static_cast<int>(right);
 
     std::string op = node->getString();
+  
     if (op == "+") return std::fmod(l + r, static_cast<double>(LARGE_PRIME));
     if (op == "-") return std::fmod(l - r, static_cast<double>(LARGE_PRIME));
     if (op == "*") return std::fmod(l * r, static_cast<double>(LARGE_PRIME));

@@ -3,6 +3,8 @@
 #include <atomic>
 #include "Tree.h"
 
+constexpr int LARGE_PRIME = 6101; 
+
 Tree full_tree_constructor(int n);
 Tree random_tree_constructor(int n);
 Tree most_unbalanced_tree_constructor(int height);
@@ -26,10 +28,10 @@ double evaluate_serial(Node* node) {
     double result = 0;
 
     std::string op = node->getString();
-    if (op == "+") result = left + right;
-    else if (op == "-") result = left - right;
-    else if (op == "*") result = left * right;
-    else if (op == "/") result = (right != 0 ? left / right : std::numeric_limits<double>::infinity());
+    if (op == "+") result = std::fmod(left + right, static_cast<double>(LARGE_PRIME)); // (left + right) % LARGE_PRIME;
+    else if (op == "-") result = std::fmod(left - right, static_cast<double>(LARGE_PRIME));
+    else if (op == "*") result = std::fmod(left * right, static_cast<double>(LARGE_PRIME));
+    else if (op == "/") result = (right != 0 ? std::fmod(left / right, static_cast<double>(LARGE_PRIME)) : std::numeric_limits<double>::infinity());
 
     node->setEval(result);
     return result;
@@ -110,5 +112,5 @@ int main() {
     return 0;
 }
 
-// g++ main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp -std=c++17 -pthread -o main
+// clang++ -std=c++17 -Xpreprocessor -fopenmp -I/opt/homebrew/include -L/opt/homebrew/lib -lomp main.cpp Tree.cpp Node.cpp tree_constructor.cpp divide_and_conquer.cpp randomised.cpp -std=c++17 -pthread -o main
 // ./main
