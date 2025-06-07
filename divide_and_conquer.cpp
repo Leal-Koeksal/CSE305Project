@@ -9,10 +9,6 @@
 
 constexpr int LARGE_PRIME = 6101;
 
-// Maximum number of threads we ever want to have running at once:
-// constexpr int MAX_THREADS = 4;  
-
-// Global atomic counter of how many threads are currently evaluating subtrees:
 static std::atomic<int> active_threads{0};
 
 double evaluate(Node* node) {
@@ -43,7 +39,6 @@ double evaluate(Node* node) {
 }
 
 // Recursive helper that attempts to spawn a new thread if there is capacity.
-// If not, it falls back to plain sequential evaluation of both children.
 void evaluate_parallel(
     Node* node,
     std::shared_ptr<std::promise<double>> result_promise,
@@ -53,7 +48,7 @@ void evaluate_parallel(
         if (!node) 
             throw std::runtime_error("Node is null");
 
-        // If it's a leaf, it must be a numeric leaf (not an operator).
+        // If it's a leaf, it must be numeric (not an operator).
         if (node->is_leaf()) {
             if (node->is_op()) 
                 throw std::runtime_error("Invalid leaf node with operator");
@@ -62,31 +57,24 @@ void evaluate_parallel(
             return;
         }
 
-        // Non‐leaf: we have an operator, so we need to evaluate left and right.
+        // Non‐leaf: operator, evaluate left and right.
         double right_result = 0.0;
         std::future<double> left_future;
 
-        // Check if we can spawn a new thread for the left subtree:
         int old_count = active_threads.load(std::memory_order_relaxed);
         bool do_spawn = false;
         while (old_count < MAX_THREADS) {
-            // try to claim one “slot”
             if (active_threads.compare_exchange_weak(old_count, old_count + 1,
                                                      std::memory_order_acquire,
                                                      std::memory_order_relaxed)) {
                 do_spawn = true;
                 break;
             }
-            // else old_count was updated to a larger value; loop until no capacity or succeed
         }
 
         if (do_spawn) {
-            // We will evaluate left in a newly spawned thread.
             auto left_promise = std::make_shared<std::promise<double>>();
             left_future = left_promise->get_future();
-
-            // We must capture node->getLeftChild() into a local variable (to avoid capturing `node` by reference
-            // if node might go out of scope). Likewise capture left_promise by value.
             Node* left_child = node->getLeftChild();
 
             /*
@@ -100,17 +88,13 @@ void evaluate_parallel(
             */
 
             std::thread left_thread([left_child, left_promise, MAX_THREADS]() {
-                // Evaluate the left subtree recursively in this new thread:
                 evaluate_parallel(left_child, left_promise, MAX_THREADS);
             
-                // Once this thread's work is done, decrement the global counter:
                 active_threads.fetch_sub(1, std::memory_order_release);
             });
 
-            // Meanwhile, in this thread, we evaluate the right subtree (always sequentially):
             right_result = evaluate(node->getRightChild());
 
-            // Wait for the left‐thread to finish:
             left_thread.join();
         }
         else {
@@ -131,10 +115,9 @@ void evaluate_parallel(
             return;
         }
 
-        // If we did spawn, then at this point `left_future` holds the left‐subtree’s result:
         double left_result = left_future.get();
 
-        // Now combine left_result and right_result with the current node’s operator:
+        // Combine left_result and right_result with the current node’s operator:
         std::string op = node->getString();
         double final_res = 0.0;
         if (op == "+") final_res = std::fmod(left_result + right_result, static_cast<double>(LARGE_PRIME));
@@ -152,15 +135,9 @@ void evaluate_parallel(
     }
 }
 
-// Public entry‐point: creates the promise/future pair and invokes the helper on the “main thread.”
 double evaluate_parallel(Node* node, int MAX_THREADS) {
     auto result_promise = std::make_shared<std::promise<double>>();
     std::future<double> result_future = result_promise->get_future();
-
-    // We could run the very top call in a new thread, but there is no benefit:
-    // Just call the helper directly; it will spawn when needed.
     evaluate_parallel(node, result_promise, MAX_THREADS);
-
-    // Either got a value or an exception:
     return result_future.get();
 }
